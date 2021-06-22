@@ -1,6 +1,6 @@
 # define a function to define the frequency of a certain length of fragment in a DNA sequence 
 def kmer_frequency():
-    filename = input("Please enter your txt file name (including directory): ")
+    filename = input("Please enter your sequence file (including directory): ")
     # define the kmer length
     length = int(input("Please enter kmer length: "))
     with open(filename,'r') as file:
