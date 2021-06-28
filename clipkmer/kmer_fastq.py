@@ -45,20 +45,19 @@ def shuffled_sequence(sequence, kmer_sequence):
     
     for i in range(0,100):
         count = 0
-
+        
         for line in sequence:
             shuffled_line = ''.join(random.sample(line,len(line)))
 
             if len(line) >= length:
-                for i in range(0,len(shuffled_line)-length+1):
-                    count += shuffled_line.count(kmer_sequence)
+                count += shuffled_line.count(kmer_sequence)
 
             else:
                 print("Warning: The kmer length is longer than nucleotide sequence")
 
         kmer_counts.append(count)
 
-    print(kmer_counts)
+        print(kmer_counts)
     return kmer_counts
 
 if __name__ == '__main__':
