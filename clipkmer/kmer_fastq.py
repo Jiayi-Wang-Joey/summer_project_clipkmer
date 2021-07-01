@@ -1,5 +1,6 @@
 # Before run this code, please unzip the fastq file. 
 import random
+from datetime import datetime
 
 def read_sequence(filename):
     with open(filename, "r") as file: 
@@ -7,62 +8,74 @@ def read_sequence(filename):
         file_content = file.readlines()
         for i in range(len(file_content)):
             if file_content[i].startswith("@"):
-                sequence.append(file_content[i+1])
+                sequence.append(file_content[i+1].strip('\n'))
     return sequence
 
 def kmer_frequency(sequence, length):
     output_dict = {}
-    
+    # sequence = list(filter(lambda sequence: len(sequence) >= length, sequence))
+    sequence = sequence[:100000]
     for line in sequence:
         # Save the kmer frequency for each sequence
         line_dict = {}
-        used_counts = 0
-        skipped_counts = 0
-        if len(line) >= length:
-            for i in range(0,len(line)-length+1):
-                fragment = line[i:i+length]
-                count = line.count(fragment)
-                line_dict[fragment] = count
+            
+        for i in range(0,len(line)-length+1):
+            fragment = line[i:i+length]
+            if fragment in line_dict.keys():
+                line_dict[fragment] += 1
+            else:
+                line_dict.setdefault(fragment, 1)
+            # line_dict[fragment] += 1 if fragment in line_dict.keys() else line_dict.setdefault(fragment, 1)
                 
             # Add the kmer frequency in each sequence to the total dictionary 
-            for key in line_dict:
-                if key in output_dict.keys():
-                    output_dict[key] += line_dict[key]
-                else:
-                    output_dict[key] = line_dict[key]
+        for key in line_dict:
+            if key in output_dict.keys():
+                output_dict[key] += line_dict[key]
+            else:
+                output_dict[key] = line_dict[key]
                 
-            used_counts += 1
-
-        else:
-            print("Warning: The kmer length is longer than nucleotide sequence")
-            skipped_counts += 1
-    
     return output_dict
 
-def shuffled_sequence(sequence, kmer_sequence):
+def shuffled_sequence(sequence, length):
     random.seed(100)
-    kmer_counts = []
+    filtered_sequence = list(filter(lambda sequence: len(sequence) >= length, sequence))
+    skipped_sequence_number = len(sequence) - len(filtered_sequence)
+    print(f'Warning: Skipped {skipped_sequence_number} sequences')
+    
+    filtered_sequence = filtered_sequence[:100000]
+    total_dicts = []
     
     for i in range(0,100):
-        count = 0
-        
-        for line in sequence:
+        new_sequence = []
+        for line in filtered_sequence:
             shuffled_line = ''.join(random.sample(line,len(line)))
+            new_sequence.append(shuffled_line)
+        
+        output_dict = kmer_frequency(new_sequence, length)
+        total_dicts.append(output_dict)
+    
+    return total_dicts
 
-            if len(line) >= length:
-                count += shuffled_line.count(kmer_sequence)
-
-            else:
-                print("Warning: The kmer length is longer than nucleotide sequence")
-
-        kmer_counts.append(count)
-
-        print(kmer_counts)
+def kmer_count(total_dicts,kmer_sequence):
+    kmer_counts = []
+    for dicti in total_dicts:
+        if kmer_sequence in dicti.keys():
+            kmer_counts.append(dicti[kmer_sequence])
+        else:
+            kmer_counts.append(0) 
+    
     return kmer_counts
 
 if __name__ == '__main__':
+    start_time = datetime.now()
     filename = input("Enter the input fastq file directory: ")
     sequence = read_sequence(filename)
     length = int(input("Enter the kmer length: "))
-    kmer_sequence = input("Enter the kmer sequence: ") # The same length as the input length
-    shuffled_sequence(sequence,kmer_sequence)
+    total_dicts = shuffled_sequence(sequence,length)
+    kmer_sequence = input("Enter the kmer sequence: ")
+    kmer_counts = kmer_count(total_dicts,kmer_sequence)
+    print(kmer_counts)
+    output_dict = kmer_frequency(sequence, length)
+    print(output_dict[kmer_sequence])
+    end_time = datetime.now()
+    print('Duration: {}'.format(end_time - start_time))
