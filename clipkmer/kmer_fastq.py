@@ -3,7 +3,7 @@ import random
 from datetime import datetime
 
 def read_sequence(filename):
-    with open(filename, "r") as file: 
+    with open(filename, "r") as file:  
         sequence = []
         file_content = file.readlines()
         for i in range(len(file_content)):
