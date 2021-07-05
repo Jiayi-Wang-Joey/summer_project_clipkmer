@@ -5,6 +5,7 @@ import numpy as np
 from numpy.core.fromnumeric import mean
 import scipy.stats
 import statistics
+from collections import Counter
 
 
 def read_sequence(filename):
@@ -41,12 +42,15 @@ def kmer_frequency(sequence, length):
 def stat_kmer(output_dict):
     mean_of_counts = np.mean(np.array(output_dict.values()))
     median_of_counts = statistics.median(list(output_dict.values()))
+    max_kmer = dict(Counter(output_dict).most_common(10))
     one_count_kmer = {}
     for key,value in output_dict.items():
         if output_dict[key] == 1:
             one_count_kmer[key] = output_dict[key]
     
-    return mean_of_counts, median_of_counts, one_count_kmer
+    one_kmer_proportion = len(one_count_kmer)/len(output_dict)
+    
+    return mean_of_counts, median_of_counts, max_kmer, one_count_kmer, one_kmer_proportion
 
 
 def shuffled_sequence(sequence, length):
