@@ -1,11 +1,14 @@
 # Before run this code, please unzip the fastq file. 
+from os import stat
 import random
 from datetime import datetime
+import scipy
 import numpy as np
+from numpy.core.defchararray import count
 from numpy.core.fromnumeric import mean
-import scipy.stats
 import statistics
 from collections import Counter
+from numpy import array
 
 
 def read_sequence(filename):
@@ -15,7 +18,7 @@ def read_sequence(filename):
         for i in range(len(file_content)):
             if file_content[i].startswith("@"):
                 sequence.append(file_content[i+1].strip('\n'))
-    sequence = sequence[:10000]
+    sequence = sequence[:1000]
     return sequence
 
 def kmer_frequency(sequence, length):
@@ -40,13 +43,13 @@ def kmer_frequency(sequence, length):
     return output_dict
 
 def stat_kmer(output_dict):
-    mean_of_counts = np.mean(np.array(output_dict.values()))
+    mean_of_counts = array([values for values in output_dict.values()]).mean()
     median_of_counts = statistics.median(list(output_dict.values()))
-    max_kmer = dict(Counter(output_dict).most_common(10))
+    max_kmer = dict(Counter(output_dict).most_common(1))
     one_count_kmer = {}
-    for key,value in output_dict.items():
+    for key in output_dict.keys():
         if output_dict[key] == 1:
-            one_count_kmer[key] = output_dict[key]
+            one_count_kmer[key] = 1
     
     one_kmer_proportion = len(one_count_kmer)/len(output_dict)
     
@@ -108,8 +111,21 @@ def counts_mean_CI(total_dicts, confidence = 0.95):
         mean_values[key] = m
         upper_CI[key] = m + h
         lower_CI[key] = m - h
-
+        
     return mean_values, upper_CI, lower_CI
+    
+
+def kmer_enrichment(total_dicts,output_dict):
+    p_value = {}
+    for key in output_dict.keys():
+        count = 0
+        for dicts in total_dicts:
+            if key in dicts.keys() and dicts[key] >= output_dict[key]:
+                count += 1
+        
+        p_value[key] = count/100
+
+    return p_value
 
 if __name__ == '__main__':
     start_time = datetime.now()
@@ -119,9 +135,9 @@ if __name__ == '__main__':
     total_dicts = shuffled_sequence(sequence,length)
     kmer_sequence = input("Enter the kmer sequence: ")
     kmer_counts = kmer_count(total_dicts,kmer_sequence)
-    print(kmer_counts)
     output_dict = kmer_frequency(sequence, length)
-    print(output_dict[kmer_sequence])
+    mean_of_counts, median_of_counts, max_kmer, one_count_kmer, one_kmer_proportion = stat_kmer(output_dict)
     mean_values, upper_CI, lower_CI = counts_mean_CI(total_dicts, confidence = 0.95)
+    p_value = kmer_enrichment(total_dicts,output_dict)
     end_time = datetime.now()
     print('Duration: {}'.format(end_time - start_time))
