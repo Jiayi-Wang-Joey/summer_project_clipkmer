@@ -18,7 +18,7 @@ def read_sequence(filename):
         for i in range(len(file_content)):
             if file_content[i].startswith("@"):
                 sequence.append(file_content[i+1].strip('\n'))
-    sequence = sequence[:1000]
+    sequence = sequence[:10000]
     return sequence
 
 def kmer_frequency(sequence, length):
@@ -46,15 +46,13 @@ def stat_kmer(output_dict):
     mean_of_counts = array([values for values in output_dict.values()]).mean()
     median_of_counts = statistics.median(list(output_dict.values()))
     max_kmer = dict(Counter(output_dict).most_common(1))
-    one_count_kmer = {}
+    max_kmer = list(max_kmer.values())[0]
+    one_count_kmer = 0
     for key in output_dict.keys():
         if output_dict[key] == 1:
-            one_count_kmer[key] = 1
-    
-    one_kmer_proportion = len(one_count_kmer)/len(output_dict)
-    
+            one_count_kmer += 1
+    one_kmer_proportion = one_count_kmer/len(output_dict)
     return mean_of_counts, median_of_counts, max_kmer, one_count_kmer, one_kmer_proportion
-
 
 def shuffled_sequence(sequence, length):
     random.seed(100)
@@ -73,6 +71,28 @@ def shuffled_sequence(sequence, length):
         total_dicts.append(output_dict)
     
     return total_dicts
+
+def shuffled_stat(total_dicts):
+    shuffled_mean = []
+    shuffled_mid = []
+    shuffled_max = []
+    shuffled_one_count_kmer = []
+    shuffled_one_count_proportion = []
+    for dicts in total_dicts:
+        mean_of_counts, median_of_counts, max_kmer, one_count_kmer, one_kmer_proportion = stat_kmer(dicts)
+        shuffled_mean.append(mean_of_counts)
+        shuffled_mid.append(median_of_counts)
+        shuffled_max.append(list(max_kmer.values())[0])
+        shuffled_one_count_kmer.append(len(one_count_kmer))
+        shuffled_one_count_proportion.append(one_kmer_proportion)
+    
+    shuffled_mean = np.mean(np.array(shuffled_mean))
+    shuffled_mid = np.mean(np.array(shuffled_mid))
+    shuffled_max = np.mean(np.array(shuffled_max))
+    shuffled_one_count_kmer = np.mean(np.array(shuffled_one_count_kmer))
+    shuffled_one_count_proportion = np.mean(np.array(shuffled_one_count_proportion))
+
+    return shuffled_mean, shuffled_mid, shuffled_max, shuffled_one_count_kmer, shuffled_one_count_proportion
 
 def kmer_count(total_dicts,kmer_sequence):
     kmer_counts = []
