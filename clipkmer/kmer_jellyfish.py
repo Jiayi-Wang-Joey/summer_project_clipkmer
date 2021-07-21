@@ -34,7 +34,7 @@ def jellyfish_dump(jf):
         tsvreader = csv.reader(f, delimiter = "\t")
         for row in tsvreader:
             kmer_count[row[0]] = row[1]
-    print(len(kmer_count))
+    
     return kmer_count
     
 
@@ -53,7 +53,7 @@ def jellyfish_stats(jf):
     
     stats_result.remove('')
     stats_result = [ int(x) for x in stats_result ]
-    
+    print(stats_result)
     # stats_result is a list that contains Unique, Distinct, Total and Max. 
     return stats_result
 
@@ -92,8 +92,6 @@ def jellyfish_shuffled(filename,length):
             file.close()
             shuffled_file.close()
         
-    
-    
     return total_shuffled_dicts
 
           
