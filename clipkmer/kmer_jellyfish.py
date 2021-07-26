@@ -5,12 +5,13 @@ from datetime import datetime
 import os
 import csv
 import random
+from Bio import SeqIO
 
 os.chdir('/Users/apple/Desktop/Summer_project/dataset/')
 
 def jellyfish_count(filename,length):
     # Use the jellyfish count command to generate the jf file for further analysis
-    with tempfile.NamedTemporaryFile(mode="wt", delete=False) as out_f:
+    with tempfile.NamedTemporaryFile(mode="wt", delete=False,suffix='.jf') as out_f:
         command_result = subprocess.run(['jellyfish','count','-m',str(length),'-t','4','-s','1G','-o',out_f.name,filename],
         check=True,
         stdout = out_f
@@ -79,31 +80,29 @@ def jellyfish_shuffled(filename,length):
     random.seed(100)
     total_shuffled_dicts = []
     for i in range(0,100):
-        with open(filename, "r") as file, tempfile.NamedTemporaryFile(mode='wt',delete=False,suffix='.fq') as shuffled_file:
-            file_content = file.readlines()
-            for j in range(len(file_content)-3):
-                if file_content[j].startswith('A') or file_content[j].startswith('T') or file_content[j].startswith('C') or file_content[j].startswith('G'):
-                    shuffled_file.write(''.join(random.sample(file_content[j],len(file_content[j]))))
-                else:
-                    shuffled_file.write(file_content[j])
-                    
-            each_shuffled_dict = jellyfish_count('tempfile.fq',length)
+        with tempfile.NamedTemporaryFile(mode='wt',delete=False,suffix='.fasta') as shuffled_file:
+            for record in SeqIO.parse(filename, "fastq"):
+                shuffled_file.write(">"+record.id + "\n")
+                shuffled_file.write(''.join(random.sample(str(record.seq),len(str(record.seq))))+"\n")
+            
+            print(shuffled_file.name)
+            temp_jf = jellyfish_count(shuffled_file.name,length)
+            each_shuffled_dict = jellyfish_dump(temp_jf)
+            print(each_shuffled_dict)
             total_shuffled_dicts.append(each_shuffled_dict)
-            file.close()
             shuffled_file.close()
+        print(total_shuffled_dicts)
         
     return total_shuffled_dicts
-
-          
 
 if __name__ == "__main__":
     start_time = datetime.now()
     filename = input("Enter the input fastq file directory: ")
     length = int(input("Enter the kmer length: "))
-    jf = jellyfish_count(filename,length)
-    jellyfish_dump(jf)
-    jellyfish_stats(jf)
-    jellyfish_histo(jf)
+    #jf = jellyfish_count(filename,length)
+    #jellyfish_dump(jf)
+    #jellyfish_stats(jf)
+    #jellyfish_histo(jf)
     jellyfish_shuffled(filename,length)
     end_time = datetime.now()
     print('Duration: {}'.format(end_time - start_time))
